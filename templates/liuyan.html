@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="utf-8">
+	<title>留言</title>
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<link rel="stylesheet" href="/css/liuyan.css">
+
+	<!-- 过场动画样式 -->
+	<style>
+		:root{
+			--pl-dur: 800ms;          /* 淡出时长 */
+			--pl-min: 1200ms;         /* 最短展示时长，避免闪一下 */
+			--pl-max: 6000ms;         /* 最长展示时间（兜底） */
+			--bg1:#667eea; --bg2:#764ba2; --accent:#ff9a9e;
+			--txt:#fff; --subtxt:rgba(255,255,255,.85);
+		}
+		body.preloading { overflow: hidden; } /* 避免滚动穿透 */
+
+		/* 覆盖层 */
+		#splash{
+			position:fixed; inset:0; z-index:9999;
+			display:grid; place-items:center;
+			color:var(--txt);
+			background:
+					radial-gradient(1200px 800px at 50% -20%, rgba(0,0,0,.0), rgba(0,0,0,.45)),
+					linear-gradient(135deg, var(--bg1), var(--bg2));
+			transition: opacity var(--pl-dur) ease, visibility var(--pl-dur) ease;
+		}
+		#splash.is-hidden{ opacity:0; visibility:hidden; }
+
+		.wrap{ text-align:center; padding:32px; max-width:90%; }
+		.logo{ margin-bottom:20px; animation:popIn .8s both; }
+		.logo-icon{
+			width:100px;height:100px;margin:0 auto 20px;
+			background:rgba(255,255,255,.15); border-radius:24px;
+			display:flex;align-items:center;justify-content:center;font-size:48px;
+			box-shadow:0 12px 40px rgba(0,0,0,.3); backdrop-filter: blur(10px);
+			border:1px solid rgba(255,255,255,.2); animation:pulse 3s infinite ease-in-out;
+		}
+		h1{ margin:0 0 12px; font-weight:800; letter-spacing:.04em;
+			font-size:clamp(28px,6vw,56px); line-height:1.15;
+			filter: drop-shadow(0 6px 18px rgba(0,0,0,.25)); animation:popIn .9s .1s both;}
+		.subtitle{ font-size:clamp(14px,2.8vw,18px); color:var(--subtxt); margin-bottom:30px; animation:fadeInUp 1s .2s both; }
+
+		.progress-container{ width:min(420px,80vw); margin:0 auto 10px; animation:fadeIn .5s .3s both; }
+		.progress-text{ display:flex; justify-content:space-between; margin-bottom:8px; font-size:14px; opacity:.9; }
+		.bar{ position:relative; height:6px; background:rgba(255,255,255,.18); border-radius:999px; overflow:hidden; }
+		.bar-fill{ position:absolute; inset:0 auto 0 0; width:0%;
+			background:linear-gradient(90deg,var(--accent),#ffd6a5,var(--accent));
+			box-shadow:0 0 10px rgba(255,154,158,.5); border-radius:999px;
+			transition:width .1s linear; }
+
+		.dots{ display:inline-flex; gap:8px; align-items:center; justify-content:center; margin-top:6px; min-height:18px;}
+		.dot{ width:8px;height:8px;border-radius:999px;background:#fff;opacity:.25; transform:translateY(0); animation:bounce .9s infinite ease-in-out; }
+		.dot:nth-child(2){ animation-delay:.12s } .dot:nth-child(3){ animation-delay:.24s }
+
+		.features{ display:flex;justify-content:center;gap:20px;margin-top:24px;flex-wrap:wrap; }
+		.feature{ display:flex;align-items:center;gap:8px;font-size:14px;opacity:.9; animation:fadeInUp 1s .4s both; }
+		.feature-icon{ width:20px;height:20px;background:rgba(255,255,255,.2);border-radius:50%;
+			display:flex;align-items:center;justify-content:center;font-size:12px; }
+
+		.skip{ margin-top:18px; font-size:13px; opacity:.8; animation:fadeInUp 1s .5s both; }
+		.skip kbd{ padding:.2em .6em;border-radius:6px;background:rgba(255,255,255,.18);
+			border:1px solid rgba(255,255,255,.25); font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px; }
+
+		/* 背景小装饰（可选） */
+		.bg-decoration{ position:absolute; inset:0; overflow:hidden; z-index:-1; }
+		.bubble{ position:absolute; border-radius:50%; background:rgba(255,255,255,.1); animation:float 20s infinite ease-in-out; }
+		.bubble:nth-child(1){ width:80px;height:80px; top:10%; left:10%; animation-delay:0s; }
+		.bubble:nth-child(2){ width:120px;height:120px; top:70%; left:80%; animation-delay:-5s; }
+		.bubble:nth-child(3){ width:60px;height:60px; top:40%; left:85%; animation-delay:-10s; }
+		.bubble:nth-child(4){ width:100px;height:100px; top:80%; left:15%; animation-delay:-15s; }
+		.word-card{ position:absolute; width:120px;height:80px; background:rgba(255,255,255,.15);
+			border-radius:12px; display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;
+			box-shadow:0 8px 32px rgba(0,0,0,.2); backdrop-filter: blur(10px);
+			border:1px solid rgba(255,255,255,.2); animation:floatCard 25s infinite ease-in-out; z-index:-1; }
+		.word-card:nth-child(5){ top:15%; left:75%; animation-delay:-2s; }
+		.word-card:nth-child(6){ top:65%; left:10%; animation-delay:-8s; }
+
+		/* 动画 */
+		@keyframes popIn{ from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
+		@keyframes fadeInUp{ from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+		@keyframes fadeIn{ from{opacity:0} to{opacity:1} }
+		@keyframes bounce{ 0%,100%{opacity:.25;transform:translateY(0)} 50%{opacity:1;transform:translateY(-4px)} }
+		@keyframes float{ 0%,100%{transform:translateY(0) translateX(0)} 25%{transform:translateY(-20px) translateX(10px)} 50%{transform:translateY(-10px) translateX(20px)} 75%{transform:translateY(-30px) translateX(-10px)} }
+		@keyframes floatCard{ 0%,100%{transform:translateY(0) translateX(0) rotate(0)} 25%{transform:translateY(-15px) translateX(15px) rotate(3deg)} 50%{transform:translateY(-5px) translateX(25px) rotate(-2deg)} 75%{transform:translateY(-25px) translateX(-5px) rotate(2deg)} }
+		@keyframes pulse{ 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+
+		@media (prefers-reduced-motion: reduce){
+			.logo-icon,.dot,.bubble,.word-card{ animation:none !important; }
+			#splash{ transition:none !important; }
+		}
+	</style>
+</head>
+<body class="preloading">
+
+<!-- 覆盖层：过场动画（不跳转，加载后自动淡出） -->
+<div id="splash" role="dialog" aria-live="polite" aria-busy="true">
+	<div class="bg-decoration" aria-hidden="true">
+		<div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+		<div class="word-card">Memory</div><div class="word-card">Learn</div>
+	</div>
+
+	<div class="wrap">
+		<div class="logo"><div class="logo-icon">📚</div></div>
+		<h1>今天你背单词了吗？</h1>
+		<div class="subtitle">English 打卡 · 让坚持更简单</div>
+
+		<div class="progress-container">
+			<div class="progress-text">
+				<span>正在准备留言页</span>
+				<span id="progress-percent">0%</span>
+			</div>
+			<div class="bar"><div class="bar-fill" id="progress-bar"></div></div>
+		</div>
+
+		<div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+
+		<div class="features">
+			<div class="feature"><div class="feature-icon">✓</div><span>科学记忆算法</span></div>
+			<div class="feature"><div class="feature-icon">✓</div><span>个性化词库</span></div>
+			<div class="feature"><div class="feature-icon">✓</div><span>进度追踪</span></div>
+		</div>
+
+		<div class="skip">按 <kbd>Enter</kbd> / <kbd>Space</kbd> 或点击屏幕可跳过</div>
+	</div>
+</div>
+
+<script src="/js/liuyan.js"></script>
+<div class="box" aria-hidden="true" id="mainApp">
+	<div class="container flexsb">
+		<div class="left">
+			<div class="tit">留言建议</div>
+			<div class="item yining"><input type="text" placeholder="请输入你的昵称" class="name"></div>
+			<div class="item yining"><textarea placeholder="请输入留言内容" class="text"></textarea></div>
+			<div class="btn flexsb">
+				<button class="yining clear bg">清空</button>
+				<button class="yining OK bg">提交</button>
+			</div>
+		</div>
+		<div class="right">
+			<div class="tit">留言板</div>
+			<div class="list">
+				<div class="item yining bg">
+					<div class="top flexsb">
+						<div>
+							<img src="/img/bg1.jpg" alt="" />
+							<div>初音未来</div>
+						</div>
+						<span>发布于:2025/9/22 07:42:35</span>
+					</div>
+					<div class="btm">你好！</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- 过场控制脚本：填充进度 & 自动淡出 -->
+<script>
+	(function(){
+		const splash = document.getElementById('splash');
+		const bar = document.getElementById('progress-bar');
+		const percent = document.getElementById('progress-percent');
+		const app = document.getElementById('mainApp');
+
+		let start = performance.now();
+		let progress = 0;
+		let rafId = null;
+		let loaded = false;
+		let hidden = false;
+
+		// 无障碍：加载时隐藏主内容
+		app.setAttribute('aria-hidden','true');
+
+		function tick(){
+			if (loaded) return;
+			const target = 90;
+			progress += (target - progress) * 0.03 + 0.15;
+			setProgress(Math.min(progress, target));
+			rafId = requestAnimationFrame(tick);
+		}
+		function setProgress(p){
+			bar.style.width = p.toFixed(1) + '%';
+			percent.textContent = Math.round(p) + '%';
+		}
+
+		// 最短展示 & 最长兜底
+		const MIN = parseTime(getComputedStyle(document.documentElement).getPropertyValue('--pl-min')) || 1200;
+		const MAX = parseTime(getComputedStyle(document.documentElement).getPropertyValue('--pl-max')) || 6000;
+		const startTimer = performance.now();
+
+		// 页面完全加载
+		window.addEventListener('load', () => {
+			loaded = true;
+			if (rafId) cancelAnimationFrame(rafId);
+			// 确保至少显示 MIN
+			const elapsed = performance.now() - startTimer;
+			const remain = Math.max(0, MIN - elapsed);
+			setTimeout(fillTo100ThenHide, remain);
+		}, { once:true });
+
+		// 兜底：最多显示 MAX
+		const failSafe = setTimeout(() => {
+			if (!hidden) fillTo100ThenHide();
+		}, MAX);
+
+		// 支持跳过
+		function skip(){
+			clearTimeout(failSafe);
+			loaded = true;
+			fillTo100ThenHide(200); // 快速补满
+		}
+		document.addEventListener('keydown', e => {
+			if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); skip(); }
+		});
+		document.addEventListener('click', skip, { once:true });
+
+		// bfcache 返回时立即隐藏
+		window.addEventListener('pageshow', e => { if (e.persisted) hide(); });
+
+		// 启动动画
+		if (document.readyState === 'loading'){
+			document.addEventListener('DOMContentLoaded', () => { rafId = requestAnimationFrame(tick); });
+		}else{
+			rafId = requestAnimationFrame(tick);
+		}
+
+		function fillTo100ThenHide(speed = 0){
+			const step = () => {
+				progress += (100 - progress) * 0.15 + 1.2;
+				setProgress(Math.min(progress, 100));
+				if (progress < 99.8) requestAnimationFrame(step);
+				else setTimeout(hide, speed);
+			};
+			step();
+		}
+
+		function hide(){
+			if (hidden) return;
+			hidden = true;
+			splash.setAttribute('aria-busy','false');
+			splash.classList.add('is-hidden');
+			app.removeAttribute('aria-hidden');
+			document.body.classList.remove('preloading');
+			setTimeout(() => splash.remove(), parseTime(getComputedStyle(document.documentElement).getPropertyValue('--pl-dur')) + 50);
+		}
+
+		function parseTime(v){
+			v = (v || '').trim();
+			if(!v) return 0;
+			if(v.endsWith('ms')) return parseFloat(v);
+			if(v.endsWith('s')) return parseFloat(v)*1000;
+			return parseFloat(v) || 0;
+		}
+	})();
+</script>
+</body>
+</html>

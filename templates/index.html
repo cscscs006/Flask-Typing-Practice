@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>英语打卡网站</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1><i class="fas fa-keyboard"></i> English打卡</h1>
+    <div class="subtitle">导入词库 · 语音朗读 </div>
+  </header>
+
+  <div class="main-content">
+    <div class="practice-area">
+      <div class="tab-container">
+        <div class="tab-buttons" role="tablist" aria-label="功能标签">
+          <button class="tab-button active" data-tab="practice" role="tab" aria-selected="true">
+            <i class="fas fa-typing"></i> 打字练习
+          </button>
+          <button class="tab-button" data-tab="dictionary" role="tab" aria-selected="false">
+            <i class="fas fa-book"></i> 单词查询
+          </button>
+          <button class="tab-button" data-tab="statistics" role="tab" aria-selected="false">
+            <i class="fas fa-chart-bar"></i> 学习统计
+          </button>
+          <button class="tab-button" data-tab="library" role="tab" aria-selected="false">
+            <i class="fas fa-database"></i> 词库管理
+          </button>
+          <button class="tab-button" data-tab="settings" role="tab" aria-selected="false">
+            <i class="fas fa-cog"></i> 设置
+          </button>
+          <button id="feedbackBtn">💬 留言</button>
+        </div>
+
+        <!-- 打字练习 -->
+        <div class="tab-content active" id="practice-tab">
+          <div class="word-library">
+            <select class="library-select" id="librarySelect" aria-label="选择词库">
+              <option value="cet4">CET-4 四级</option>
+              <option value="cet6">CET-6 六级</option>
+              <option value="toefl">TOEFL</option>
+              <option value="ielts">IELTS</option>
+              <option value="gre">GRE</option>
+              <option value="custom">自定义词库</option>
+            </select>
+
+            <textarea class="custom-textarea" id="customTextarea" rows="3" placeholder="输入自定义词库，格式：单词:释义" style="display:none" aria-label="自定义词库"></textarea>
+
+            <div class="mode-selector" role="group" aria-label="练习模式">
+              <button class="mode-btn active" data-mode="follow" type="button">
+                <i class="fas fa-mouse-pointer"></i> 跟打
+              </button>
+              <button class="mode-btn" data-mode="review" type="button">
+                <i class="fas fa-eye"></i> 复习
+              </button>
+              <button class="mode-btn" data-mode="dictation" type="button">
+                <i class="fas fa-pen"></i> 默写
+              </button>
+            </div>
+          </div>
+
+          <div class="text-display" id="textDisplay"></div>
+          <div class="hint" id="hintText">
+            <i class="fas fa-info-circle"></i> 准备开始练习...
+          </div>
+
+          <div class="progress-container">
+            <div class="progress-label">
+              <span>今日进度</span>
+              <span id="progressText">0/50</span>
+            </div>
+            <div class="progress-bar" aria-label="今日进度">
+              <div class="progress" id="progressBar" style="width:0%"></div>
+            </div>
+          </div>
+
+          <div class="input-area">
+            <input type="text" class="typing-input" id="typingInput" placeholder="在这里输入..." autocomplete="off" />
+          </div>
+
+          <div class="controls">
+            <button class="btn-secondary" id="btnReset" type="button">
+              <i class="fas fa-redo"></i> 重置 (R)
+            </button>
+            <button class="btn-primary" id="btnNext" type="button">
+              <i class="fas fa-arrow-right"></i> 下一词 ( ]/ Enter)
+            </button>
+          </div>
+
+          <div class="tip-box">
+            <i class="fas fa-lightbulb"></i>
+            <strong>快捷键：</strong>
+            <kbd>1</kbd> 跟打，<kbd>2</kbd> 复习，<kbd>3</kbd> 默写；
+            <kbd>5</kbd> 发音；<kbd>Enter</kbd> 提交；
+            <kbd>Space</kbd> 复习显示释义；<kbd>[</kbd> 跳过；<kbd>/</kbd> 重置。
+          </div>
+        </div>
+
+        <!-- 单词查询 -->
+        <div class="tab-content" id="dictionary-tab">
+          <div class="word-search">
+            <input type="text" class="search-input" id="searchInput" placeholder="输入单词查询...">
+          </div>
+          <div class="word-list" id="wordList">
+            <div class="word-item">输入单词开始搜索</div>
+          </div>
+          <div class="word-detail" id="wordDetail">
+            <div style="text-align:center;color:#6c757d;">
+              <i class="fas fa-search" style="font-size: 2em; margin-bottom: 10px;"></i>
+              <div>选择单词查看详情</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 学习统计 -->
+        <div class="tab-content" id="statistics-tab">
+          <div id="statsLibrarySelectContainer">
+            <label style="font-size:14px;color:#6c757d;">统计范围：</label>
+            <select id="statsLibrarySelect" class="library-select" aria-label="统计范围"></select>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-value" id="totalWords">0</div>
+            <div class="stat-label">导入单词总数</div>
+          </div>
+
+          <div class="advanced-stats">
+            <div class="stat-item">
+              <div class="stat-number" id="todayCount">0</div>
+              <div class="stat-label-small">今日完成</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number" id="accuracy">100%</div>
+              <div class="stat-label-small">今日正确率</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number" id="bestWPM">0</div>
+              <div class="stat-label-small">最佳WPM</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number" id="practiceDays">0</div>
+              <div class="stat-label-small">连续打卡天数</div>
+            </div>
+          </div>
+
+          <div id="statsExtraLine" style="margin:10px 0 6px;color:#6c757d;font-size:14px;"></div>
+
+          <div class="achievement-panel">
+            <h3><i class="fas fa-trophy"></i> 学习成就</h3>
+            <div id="achievementsList"></div>
+          </div>
+
+          <div class="data-management">
+            <h3><i class="fas fa-cog"></i> 数据管理</h3>
+            <div class="management-buttons">
+              <button class="btn-secondary" id="btnExport" type="button">
+                <i class="fas fa-download"></i> 导出数据
+              </button>
+              <button class="btn-secondary" id="btnImport" type="button">
+                <i class="fas fa-upload"></i> 导入数据
+              </button>
+              <button class="btn-secondary" id="btnSync" type="button">
+                <i class="fas fa-cloud"></i> 云端同步
+              </button>
+              <button class="btn-secondary" id="btnClear" type="button">
+                <i class="fas fa-trash"></i> 清空数据
+              </button>
+            </div>
+            <div class="cloud-sync">
+              <span class="sync-status" id="syncStatus">上次同步: 从未同步</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 词库管理 -->
+        <div class="tab-content" id="library-tab">
+          <div class="data-management">
+            <h3><i class="fas fa-file-import"></i> 词库导入</h3>
+            <div class="management-buttons">
+              <button class="btn-primary" id="btnImportCET4" type="button">
+                <i class="fas fa-book"></i> 导入CET-4
+              </button>
+              <button class="btn-primary" id="btnImportCET6" type="button">
+                <i class="fas fa-book"></i> 导入CET-6
+              </button>
+              <button class="btn-secondary" id="btnImportCustom" type="button">
+                <i class="fas fa-file-upload"></i> 导入自定义词库文件
+              </button>
+            </div>
+            <input type="file" id="fileInput" class="file-input" accept=".txt,.json,.csv">
+
+            <div style="margin-top:20px;">
+              <h3><i class="fas fa-chart-pie"></i> 当前词库统计</h3>
+              <div id="libraryStats"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 设置面板 -->
+        <div class="tab-content" id="settings-tab">
+          <div class="settings-panel">
+            <h3><i class="fas fa-volume-up"></i> 语音设置</h3>
+            <div class="setting-item">
+              <div class="setting-label">发音速度</div>
+              <div class="setting-control">
+                <input type="range" min="0.5" max="1.5" step="0.1" value="0.95" class="slider" id="speechRate">
+                <span id="rateValue">0.95</span>
+              </div>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">发音音调</div>
+              <div class="setting-control">
+                <input type="range" min="0.5" max="2" step="0.1" value="1" class="slider" id="speechPitch">
+                <span id="pitchValue">1.0</span>
+              </div>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">自动发音</div>
+              <div class="setting-control">
+                <label class="toggle">
+                  <input type="checkbox" id="autoSpeak">
+                  <span class="slider-toggle"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-panel">
+            <h3><i class="fas fa-bullseye"></i> 学习目标</h3>
+            <div class="setting-item">
+              <div class="setting-label">每日目标单词数</div>
+              <div class="setting-control">
+                <input type="number" min="10" max="200" value="50" id="dailyGoal">
+              </div>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">目标正确率 (%)</div>
+              <div class="setting-control">
+                <input type="number" min="60" max="100" value="85" id="accuracyGoal">
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-panel">
+            <h3><i class="fas fa-palette"></i> 界面设置</h3>
+            <div class="setting-item">
+              <div class="setting-label">深色模式</div>
+              <div class="setting-control">
+                <label class="toggle">
+                  <input type="checkbox" id="darkMode">
+                  <span class="slider-toggle"></span>
+                </label>
+              </div>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">字体大小</div>
+              <div class="setting-control">
+                <select id="fontSize">
+                  <option value="small">小</option>
+                  <option value="medium" selected>中</option>
+                  <option value="large">大</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-panel">
+      <div class="stat-card">
+        <div class="stat-value" id="streak">0</div>
+        <div class="stat-label">连续打卡天数</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="masteredWords">0</div>
+        <div class="stat-label">已掌握单词</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="learningWords">0</div>
+        <div class="stat-label">学习中单词</div>
+      </div>
+
+      <div class="history-panel">
+        <h3><i class="fas fa-history"></i> 今日记录</h3>
+        <div id="historyList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="text/javascript" src="/js/app.js"></script>
+</body>
+</html>
